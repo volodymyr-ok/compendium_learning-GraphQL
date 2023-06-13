@@ -4,23 +4,60 @@ const { buildSchema } = require('graphql');
 const fakeDatabase = {};
 
 const schema = buildSchema(`
+    input CommentInput {
+        author: String
+        content: String
+    }
+
+    type Comment {
+        id: ID!
+        author: String
+        content: String
+    }  
+
     type Query {
-        getInfo: String
+        getComment(id: ID!): Comment
+        getAllComments: [Comment]
     }
 
     type Mutation {
-        setInfo(infoValue: String): String
+        createComment(input: CommentInput): Comment
+        updateComment(id: ID!,  input: CommentInput): Comment
     }
 `);
 
+class Comment {
+  constructor(id, { content, author }) {
+    this.id = id;
+    this.content = content;
+    this.author = author;
+  }
+}
+
 const rootValue = {
-  setInfo: ({ infoValue }) => {
-    fakeDatabase.info = infoValue;
-    return infoValue;
+  getComment: ({ id }) => {
+    if (!fakeDatabase[id]) throw new Error('no comments exists with id ' + id);
+    return new Comment(id, fakeDatabase[id]);
   },
-  getInfo: () => {
-    if (!fakeDatabase.info) return 'There is no info';
-    return fakeDatabase.info;
+
+  createComment: ({ input }) => {
+    const id = require('crypto').randomBytes(10).toString('hex');
+
+    fakeDatabase[id] = input;
+    return new Comment(id, input);
+  },
+
+  updateComment: ({ id, input }) => {
+    if (!fakeDatabase[id]) throw new Error('no comments exists with id ' + id);
+
+    fakeDatabase[id] = input;
+    return new Comment(id, input);
+  },
+
+  getAllComments: () => {
+    return Object.keys(fakeDatabase).map(key => {
+      return new Comment(key, fakeDatabase[key]);
+    });
   },
 };
 
@@ -34,6 +71,10 @@ app.use(
     graphiql: true,
   })
 );
+
+// app.use(() => {
+//   console.log(fakeDatabase);
+// });
 
 app.listen(4000);
 console.log('listening on http://localhost:4000/graphql');
@@ -76,7 +117,7 @@ console.log('listening on http://localhost:4000/graphql');
 //     test(text: String = "Static test TEXT"): String
 //     user(name: String = "No Name"): User
 //     getDie(numSides: Int = 6): RandomDie
-//     getInfo: String
+//     getComment: String
 // }
 // type User {
 //     name: String

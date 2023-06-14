@@ -12,11 +12,14 @@ const resolvers = {
   },
 
   Mutation: {
-    post: (_, args, { prisma }) => {
-      // return prisma.link.create({ data: args });
-      const link = { id: `${links.length++}`, ...args };
-      links.push(link);
-      return link;
+    post: (_, args, { prisma }) => prisma.link.create({ data: args }),
+    delete: (_, { id }, { prisma }) => {
+      // let response = '';
+      const searchedLink = prisma.link.findUnique({ where: { id } });
+      console.log('searchedLink', searchedLink);
+
+      // prisma.link.delete({ where: { id: +id } });
+      return `Link with id - ${id} was deleted`;
     },
   },
 };

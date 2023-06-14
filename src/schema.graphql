@@ -11,4 +11,5 @@ type Link {
 
 type Mutation {
   post(url: String!, description: String!): Link!
+  delete(id: ID!): String
 }
